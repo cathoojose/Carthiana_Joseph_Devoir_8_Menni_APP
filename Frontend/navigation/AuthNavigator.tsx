@@ -112,32 +112,6 @@ export default AuthNavigator;
 
 
 
-// // navigation/AuthNavigator.tsx
-// import React from 'react';
-// import { createNativeStackNavigator } from '@react-navigation/native-stack';
-// import LoginScreen from '../screens/Auth/LoginScreen';
-// import AppNavigator from './AppNavigator';
-// import ServiceOptionsScreen from '../screens/Client/ServiceOptionsScreen';
-// import TrackingScreen from '../screens/Client/TrackingScreen';
-
-// const Stack = createNativeStackNavigator();
-
-// const AuthNavigator = () => {
-//   return (
-//     <Stack.Navigator screenOptions={{ headerShown: false }}>
-//       <Stack.Screen name="Login" component={LoginScreen} />
-//       <Stack.Screen name="AppTabs" component={AppNavigator} />
-//       <Stack.Screen name="ServiceOptions" component={ServiceOptionsScreen} />
-//       <Stack.Screen name="Tracking" component={TrackingScreen} />
-//     </Stack.Navigator>
-//   );
-// };
-
-// export default AuthNavigator;
-
-
-
-
 
 
 
