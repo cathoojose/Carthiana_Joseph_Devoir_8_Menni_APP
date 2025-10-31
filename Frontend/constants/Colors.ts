@@ -8,4 +8,8 @@ export const Colors = {
   border: '#DDDDDD',
   secondary: '#000000',
   textSecondaryLight: '#666666',
+  primary: '#eabe22',
+  primaryLight: '#FFF4D1',
+  error: '#FF4D4D',
+  buttonDisabled:'#d9707078'
 };

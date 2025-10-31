@@ -2,14 +2,16 @@
 const express = require('express');
 const db = require('./db');
 const app = express();
+const cors = require('cors');
 
+app.use(cors()); // ✅ Autorise les requêtes venant du frontend mobile
 app.use(express.json());
 
-// Ajoutez cette ligne après `app.use(express.json());`
+// ✅ Importation des routes d’authentification
 const authRoutes = require('./routes/auth.routes');
 app.use('/api/auth', authRoutes);
 
-// Exemple : obtenir tous les utilisateurs
+// ✅ Exemple : obtenir tous les utilisateurs
 app.get('/api/users', (req, res) => {
   db.all('SELECT id, name, email, user_type FROM users', [], (err, rows) => {
     if (err) {
@@ -19,7 +21,7 @@ app.get('/api/users', (req, res) => {
   });
 });
 
-// Exemple : créer un utilisateur
+// ✅ Exemple : créer un utilisateur
 app.post('/api/users', (req, res) => {
   const { name, email, password_hash, user_type } = req.body;
   const stmt = db.prepare(`
@@ -39,4 +41,3 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Serveur backend démarré sur le port ${PORT}`);
 });
-

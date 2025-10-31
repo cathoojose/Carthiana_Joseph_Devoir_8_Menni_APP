@@ -1,11 +1,9 @@
-// services/api.ts - VERSION CONNECTÉE AU BACKEND
-
+// services/api.ts
 import axios from 'axios';
 
-// ✅ Remplace l'adresse IP par celle de ton PC local accessible depuis ton téléphone (ex: ton IPv4)
-const API_BASE_URL = 'http://192.168.1.166:5000/api';
+// ✅ URL corrigée - sans '/auth' à la fin
+const API_BASE_URL = 'http://192.168.137.1:5000/api'; 
 
-// ✅ Configuration d'Axios
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
@@ -13,5 +11,33 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// ✅ Intercepteur pour le débogage
+api.interceptors.request.use(
+  (config) => {
+    console.log(`🚀 Requête API: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
+    console.log('📤 Données envoyées:', config.data);
+    return config;
+  },
+  (error) => {
+    console.error('❌ Erreur requête API:', error);
+    return Promise.reject(error);
+  }
+);
+
+api.interceptors.response.use(
+  (response) => {
+    console.log(`✅ Réponse API: ${response.status}`, response.data);
+    return response;
+  },
+  (error) => {
+    console.error(`❌ Erreur réponse API:`, {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
+    return Promise.reject(error);
+  }
+);
 
 export default api;

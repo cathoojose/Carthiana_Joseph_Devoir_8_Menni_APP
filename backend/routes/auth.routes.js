@@ -1,4 +1,4 @@
-// routes/auth.routes.js
+// routes/auth.routes.js - AJOUTEZ cette route si vous préférez utiliser request-otp
 const express = require('express');
 const db = require('../db');
 const router = express.Router();
@@ -16,6 +16,77 @@ router.get('/debug/users', (req, res) => {
     console.log('👥 Utilisateurs dans la base:', rows);
     res.json({ users: rows });
   });
+});
+
+/**
+ * 🔹 VÉRIFICATION EXISTENCE UTILISATEUR (route utilisée par le login)
+ */
+router.post('/check-user', (req, res) => {
+  const { identifier } = req.body;
+
+  console.log('🔍 Vérification utilisateur:', identifier);
+
+  db.get(
+    'SELECT id, email, phone, name, user_type FROM users WHERE email = ? OR phone = ?',
+    [identifier, identifier],
+    (err, user) => {
+      if (err) {
+        console.error('❌ Erreur DB check-user:', err);
+        return res.status(500).json({ error: 'Erreur de base de données' });
+      }
+      
+      console.log('📊 Résultat check-user:', user);
+      res.json({ 
+        exists: !!user, 
+        user: user || null 
+      });
+    }
+  );
+});
+
+/**
+ * 🔹 ROUTE REQUEST-OTP (alternative - gardez celle que vous préférez)
+ */
+router.post('/request-otp', (req, res) => {
+  const { identifier } = req.body;
+
+  console.log('📱 Request OTP pour:', identifier);
+
+  if (!identifier) {
+    return res.status(400).json({ error: 'Email ou téléphone requis' });
+  }
+
+  // Vérifier si l'utilisateur existe
+  db.get(
+    'SELECT id, email, phone, name FROM users WHERE email = ? OR phone = ?',
+    [identifier, identifier],
+    (err, user) => {
+      if (err) {
+        console.error('❌ Erreur DB request-otp:', err);
+        return res.status(500).json({ error: 'Erreur de base de données' });
+      }
+      
+      if (!user) {
+        return res.json({ 
+          success: false, 
+          error: 'Aucun compte trouvé avec ces informations' 
+        });
+      }
+
+      // ✅ Utilisateur trouvé
+      console.log('✅ Utilisateur trouvé pour OTP:', user);
+      res.json({
+        success: true,
+        message: 'Utilisateur trouvé',
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone
+        }
+      });
+    }
+  );
 });
 
 /**
@@ -54,6 +125,8 @@ router.post('/register', async (req, res) => {
             console.error('❌ Erreur insertion:', err);
             return res.status(500).json({ error: 'Erreur lors de la création du compte' });
           }
+          
+          console.log('✅ Nouvel utilisateur créé:', this.lastID);
           res.status(201).json({
             success: true,
             message: 'Compte créé avec succès',
@@ -111,22 +184,6 @@ router.post('/login', (req, res) => {
           user_type: user.user_type,
         },
       });
-    }
-  );
-});
-
-/**
- * 🔹 VÉRIFICATION EXISTENCE UTILISATEUR
- */
-router.post('/check-user', (req, res) => {
-  const { identifier } = req.body;
-
-  db.get(
-    'SELECT id, email, phone FROM users WHERE email = ? OR phone = ?',
-    [identifier, identifier],
-    (err, user) => {
-      if (err) return res.status(500).json({ error: 'Erreur de base de données' });
-      res.json({ exists: !!user, user });
     }
   );
 });
