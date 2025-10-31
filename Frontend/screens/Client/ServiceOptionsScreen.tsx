@@ -5,13 +5,13 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   Alert,
 } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { useTranslation } from 'react-i18next';
-import { Colors } from '../../constants/Colors';
-import { useNavigation } from '@react-navigation/native';
+import ThemedView from '../../components/ThemedView';
+import { useTheme } from '../../hooks/useTheme';
+import api from '../../services/api';
 
 type Props = {
   route: any;
@@ -20,39 +20,71 @@ type Props = {
 
 const ServiceOptionsScreen = ({ route, navigation }: Props) => {
   const { t } = useTranslation();
+  const theme = useTheme();
   const { departure, destination } = route.params;
 
   const services = [
-    { id: 1, name: t('Moto Express'), price: 25.0, time: '15 min', icon: '🏍️' },
-    { id: 2, name: t('Voiture Comfort'), price: 40.0, time: '30 min', icon: '🚗' },
-    { id: 3, name: t('Voiture Executive'), price: 60.0, time: '45 min', icon: '🚘' },
+    { id: 1, name: t('Moto Express'), price: 25.0, time: '5 min', icon: '🏍️' },
+    { id: 2, name: t('Voiture Comfort'), price: 40.0, time: '4 min', icon: '🚗' },
+    { id: 3, name: t('Voiture Executive'), price: 60.0, time: '3 min', icon: '🚘' },
   ];
 
   const [selectedService, setSelectedService] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (selectedService === null) {
       Alert.alert(t('error'), t('Veuillez choisir un service'));
       return;
     }
-    
-    // ✅ Navigation vers Tracking avec tous les paramètres
-    navigation.navigate('Tracking', { 
-      departure, 
-      destination, 
-      service: services[selectedService] 
-    });
+
+    const selected = services[selectedService];
+    setLoading(true);
+
+    try {
+      const response = await api.get('/drivers/available', {
+        params: { service: selected.name }
+      });
+
+      if (!response.data.driver) {
+        Alert.alert(t('Aucun chauffeur'), t('Aucun chauffeur disponible pour ce service.'));
+        return;
+      }
+
+      const driver = {
+        ...response.data.driver,
+        phone: response.data.driver.phone || '50944505285'
+      };
+
+      navigation.navigate('RideConfirmation', {
+        departure,
+        destination,
+        service: selected,
+        driver,
+      });
+    } catch (error: any) {
+      let errorMessage = t('Erreur inconnue');
+      if (error.code === 'NETWORK_ERROR' || error.message?.includes('Network Error')) {
+        errorMessage = t('Impossible de contacter le serveur. Vérifiez votre connexion internet.');
+      } else if (error.response) {
+        errorMessage = error.response.data?.message || `${t('error')} ${error.response.status}`;
+      } else if (error.request) {
+        errorMessage = t('Le serveur ne répond pas.');
+      }
+      Alert.alert(t('Erreur réseau'), errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>{departure}</Text>
-        <Text style={styles.headerSubtitle}>{destination}</Text>
+    <ThemedView>
+      <View style={[styles.header, { backgroundColor: theme.primaryLight }]}>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>{departure}</Text>
+        <Text style={[styles.headerSubtitle, { color: theme.text }]}>{destination}</Text>
       </View>
 
-      {/* ✅ Carte OpenStreetMap */}
-      <View style={styles.mapContainer}>
+      <View style={[styles.mapContainer, { borderColor: theme.border }]}>
         <MapView
           provider={PROVIDER_DEFAULT}
           style={styles.map}
@@ -62,33 +94,36 @@ const ServiceOptionsScreen = ({ route, navigation }: Props) => {
             latitudeDelta: 0.05,
             longitudeDelta: 0.05,
           }}
-          customMapStyle={[]}
           mapType="standard"
         >
           <Marker
             coordinate={{ latitude: 18.5944, longitude: -72.3074 }}
-            title="Point de départ"
+            title={t('Point de départ')}
           />
         </MapView>
       </View>
 
-      {/* ✅ Liste des services */}
       <View style={styles.serviceList}>
         {services.map((service, index) => (
           <TouchableOpacity
             key={service.id}
             style={[
               styles.serviceItem,
-              selectedService === index && styles.serviceItemSelected,
+              { backgroundColor: theme.background, borderColor: theme.border },
+              selectedService === index && {
+                backgroundColor: theme.primaryLight,
+                borderColor: theme.primary,
+              },
             ]}
             onPress={() => setSelectedService(index)}
+            disabled={loading}
           >
-            <View style={styles.serviceIcon}>
-              <Text style={styles.iconText}>{service.icon}</Text>
+            <View style={[styles.serviceIcon, { backgroundColor: theme.primaryLight }]}>
+              <Text style={[styles.iconText, { color: theme.text }]}>{service.icon}</Text>
             </View>
             <View style={styles.serviceInfo}>
-              <Text style={styles.serviceName}>{service.name}</Text>
-              <Text style={styles.serviceDetails}>
+              <Text style={[styles.serviceName, { color: theme.text }]}>{service.name}</Text>
+              <Text style={[styles.serviceDetails, { color: theme.textSecondary }]}>
                 {service.price} HTG • {service.time}
               </Text>
             </View>
@@ -96,114 +131,72 @@ const ServiceOptionsScreen = ({ route, navigation }: Props) => {
         ))}
       </View>
 
-      {/* ✅ Bouton de confirmation */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={[
-          styles.confirmButton, 
-          selectedService === null && styles.confirmButtonDisabled
-        ]} 
+          styles.confirmButton,
+          { backgroundColor: theme.button },
+          (selectedService === null || loading) && styles.confirmButtonDisabled,
+        ]}
         onPress={handleConfirm}
-        disabled={selectedService === null}
+        disabled={selectedService === null || loading}
       >
-        <Text style={styles.confirmButtonText}>{t('Commander')}</Text>
+        <Text style={[styles.confirmButtonText, { color: theme.textLight }]}>
+          {loading ? t('Recherche...') : t('Commander')}
+        </Text>
       </TouchableOpacity>
-    </SafeAreaView>
+    </ThemedView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
   header: {
-    backgroundColor: Colors.primaryLight,
     padding: 20,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
     alignItems: 'center',
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: Colors.text,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: Colors.text,
-    marginTop: 5,
-  },
+  headerTitle: { fontSize: 20, fontWeight: '600' },
+  headerSubtitle: { fontSize: 16, marginTop: 5 },
   mapContainer: {
     height: 200,
     margin: 20,
     borderRadius: 12,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: Colors.border,
   },
-  map: {
-    width: '100%',
-    height: '100%',
-  },
-  serviceList: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
+  map: { width: '100%', height: '100%' },
+  serviceList: { paddingHorizontal: 20, paddingBottom: 20 },
   serviceItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#FFF',
     borderRadius: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  serviceItemSelected: {
-    backgroundColor: Colors.primaryLight,
-    borderColor: Colors.primary,
   },
   serviceIcon: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: Colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
   },
-  iconText: {
-    fontSize: 24,
-  },
-  serviceInfo: {
-    flex: 1,
-  },
-  serviceName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.text,
-  },
-  serviceDetails: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
-  },
+  iconText: { fontSize: 24 },
+  serviceInfo: { flex: 1 },
+  serviceName: { fontSize: 18, fontWeight: '600' },
+  serviceDetails: { fontSize: 14, marginTop: 2 },
   confirmButton: {
-    backgroundColor: Colors.button,
     marginHorizontal: 20,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
     marginBottom: 20,
   },
-  confirmButtonDisabled: {
-    backgroundColor: '#CCCCCC',
-  },
-  confirmButtonText: {
-    color: Colors.textLight,
-    fontSize: 18,
-    fontWeight: '500',
-  },
+  confirmButtonDisabled: { backgroundColor: '#CCCCCC' },
+  confirmButtonText: { fontSize: 18, fontWeight: '500' },
 });
 
 export default ServiceOptionsScreen;
+
+

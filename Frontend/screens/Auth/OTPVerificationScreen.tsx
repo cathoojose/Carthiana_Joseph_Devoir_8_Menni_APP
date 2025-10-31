@@ -1,4 +1,4 @@
-// frontend/screens/Auth/OTPVerificationScreen.tsx
+// screens/Auth/OTPVerificationScreen.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -6,12 +6,12 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   Alert,
   ActivityIndicator,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Colors } from '../../constants/Colors';
+import ThemedView from '../../components/ThemedView';
+import { useTheme } from '../../hooks/useTheme';
 import api from '../../services/api';
 
 type Props = {
@@ -21,7 +21,8 @@ type Props = {
 
 const OTPVerificationScreen = ({ route, navigation }: Props) => {
   const { t } = useTranslation();
-  const { identifier } = route.params; // email ou téléphone
+  const theme = useTheme();
+  const { identifier } = route.params;
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -35,48 +36,61 @@ const OTPVerificationScreen = ({ route, navigation }: Props) => {
     try {
       const res = await api.post('/auth/verify-otp', { identifier, otp });
       if (res.data.success) {
-        // Sauvegarder le token ou userId dans AsyncStorage (à faire plus tard)
         navigation.reset({
           index: 0,
           routes: [{ name: 'Home' }],
         });
       }
     } catch (error: any) {
-      Alert.alert(t('error'), error.response?.data?.error || 'Échec de la vérification');
+      Alert.alert(t('error'), error.response?.data?.error || t('Échec de la vérification'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>{t('Entrez le code OTP')}</Text>
-      <Text style={styles.subtitle}>
-        {t('Un code a été envoyé à')} {identifier}
-      </Text>
+    <ThemedView>
+      <View style={styles.container}>
+        <Text style={[styles.title, { color: theme.text }]}>
+          {t('Entrez le code OTP')}
+        </Text>
+        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+          {t('Un code a été envoyé à')} {identifier}
+        </Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="123456"
-        value={otp}
-        onChangeText={setOtp}
-        keyboardType="number-pad"
-        maxLength={6}
-        autoFocus
-      />
+        <TextInput
+          style={[
+            styles.input,
+            {
+              borderColor: theme.border,
+              backgroundColor: theme.background === '#FFFFFF' ? '#FAFAFA' : '#1E1E1E',
+              color: theme.text,
+            },
+          ]}
+          placeholder="123456"
+          placeholderTextColor={theme.textSecondary}
+          value={otp}
+          onChangeText={setOtp}
+          keyboardType="number-pad"
+          maxLength={6}
+          autoFocus
+        />
 
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleVerify}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color={Colors.textLight} />
-        ) : (
-          <Text style={styles.buttonText}>{t('Valider')}</Text>
-        )}
-      </TouchableOpacity>
-    </SafeAreaView>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: theme.button }, loading && styles.buttonDisabled]}
+          onPress={handleVerify}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color={theme.textLight} />
+          ) : (
+            <Text style={[styles.buttonText, { color: theme.textLight }]}>
+              {t('Valider')}
+            </Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </ThemedView>
   );
 };
 
@@ -85,45 +99,38 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.background,
     padding: 20,
   },
   title: {
     fontSize: 22,
     fontWeight: '600',
     marginBottom: 8,
-    color: Colors.text,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
     marginBottom: 30,
     textAlign: 'center',
   },
   input: {
     width: '100%',
     borderWidth: 1,
-    borderColor: Colors.border,
     borderRadius: 12,
     padding: 16,
     fontSize: 20,
     textAlign: 'center',
     marginBottom: 30,
-    backgroundColor: '#FAFAFA',
   },
   button: {
-    backgroundColor: Colors.button,
     width: '100%',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
   },
   buttonDisabled: {
-    backgroundColor: Colors.buttonDisabled,
+    opacity: 0.6,
   },
   buttonText: {
-    color: Colors.textLight,
     fontSize: 18,
     fontWeight: '500',
   },

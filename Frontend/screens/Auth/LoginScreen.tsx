@@ -8,63 +8,60 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Colors } from '../../constants/Colors';
+import { useTranslation } from 'react-i18next';
+import ThemedView from '../../components/ThemedView';
+import { useTheme } from '../../hooks/useTheme';
 import api from '../../services/api';
 
 const LoginScreen = () => {
   const navigation = useNavigation<any>();
+  const theme = useTheme();
+  const { t } = useTranslation();
   const [identifier, setIdentifier] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!identifier.trim()) {
-      Alert.alert('Erreur', 'Veuillez entrer votre email ou numéro de téléphone.');
+      Alert.alert(t('error'), t('email_or_phone_required'));
       return;
     }
 
     setLoading(true);
 
     try {
-      console.log('🔄 Tentative de connexion avec:', identifier);
-      
-      // ✅ Utilise la route existante /check-user
-      const response = await api.post('/auth/check-user', { identifier: identifier.trim() });
-      
-      console.log('✅ Réponse serveur:', response.data);
+      const response = await api.post('/auth/check-user', { 
+        identifier: identifier.trim().toLowerCase() 
+      });
 
-      if (response.data.exists) {
-        console.log('🎯 Utilisateur trouvé, redirection vers Home...');
-        // ✅ Redirection vers les Tabs (Home)
+      if (response.data.exists && response.data.user) {
         navigation.reset({
           index: 0,
           routes: [{ name: 'AppTabs' }],
         });
       } else {
-        Alert.alert('Non trouvé', 'Aucun compte trouvé avec ces informations.');
+        Alert.alert(
+          t('error'),
+          t('Aucun compte trouvé avec ces informations. Voulez-vous créer un compte?'),
+          [
+            { text: t('Non'), style: 'cancel' },
+            { text: t('create_account'), onPress: () => navigation.navigate('Register') }
+          ]
+        );
       }
     } catch (error: any) {
-      console.error('❌ Erreur complète:', error);
-      
-      // Meilleur affichage des erreurs
-      if (error.response) {
-        // Le serveur a répondu avec un statut d'erreur
-        console.log('📊 Statut:', error.response.status);
-        console.log('📦 Données:', error.response.data);
-        Alert.alert('Erreur', error.response.data?.error || `Erreur ${error.response.status}`);
+      let errorMessage = t('Erreur inconnue');
+      if (error.code === 'NETWORK_ERROR' || error.message?.includes('Network Error')) {
+        errorMessage = t('network_error');
+      } else if (error.response) {
+        errorMessage = error.response.data?.error || `${t('error')} ${error.response.status}`;
       } else if (error.request) {
-        // La requête a été faite mais aucune réponse n'a été reçue
-        console.log('🌐 Aucune réponse du serveur');
-        Alert.alert('Erreur réseau', 'Impossible de contacter le serveur. Vérifiez votre connexion et l\'adresse IP.');
-      } else {
-        // Une erreur s'est produite lors de la configuration de la requête
-        console.log('⚙️ Erreur de configuration:', error.message);
-        Alert.alert('Erreur', 'Erreur de configuration de la requête.');
+        errorMessage = t('Le serveur ne répond pas');
       }
+      Alert.alert(t('error'), errorMessage);
     } finally {
       setLoading(false);
     }
@@ -75,57 +72,70 @@ const LoginScreen = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <SafeAreaView style={styles.safe}>
-        <Text style={styles.title}>Bienvenue 👋</Text>
-        <Text style={styles.subtitle}>Entrez votre email ou téléphone pour continuer</Text>
+      <ThemedView>
+        <View style={styles.safe}>
+          <Text style={[styles.title, { color: theme.text }]}>
+            {t('welcome_back')} 👋
+          </Text>
+          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+            {t('enter_email_or_phone')}
+          </Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Email ou téléphone"
-          value={identifier}
-          onChangeText={setIdentifier}
-          keyboardType={identifier.includes('@') ? 'email-address' : 'phone-pad'}
-          autoCapitalize="none"
-          editable={!loading}
-        />
+          <TextInput
+            style={[
+              styles.input,
+              {
+                borderColor: theme.border,
+                backgroundColor: theme.background === '#FFFFFF' ? '#FAFAFA' : '#7a757562',
+                color: theme.text,
+              },
+            ]}
+            placeholder={t('email_or_phone')}
+            placeholderTextColor={theme.textSecondary}
+            value={identifier}
+            onChangeText={setIdentifier}
+            keyboardType={identifier.includes('@') ? 'email-address' : 'phone-pad'}
+            autoCapitalize="none"
+            editable={!loading}
+          />
 
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Continuer</Text>
-          )}
-        </TouchableOpacity>
-      </SafeAreaView>
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: theme.button }, loading && styles.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color={theme.textLight} />
+            ) : (
+              <Text style={[styles.buttonText, { color: theme.textLight }]}>
+                {t('continue')}
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </ThemedView>
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+  container: { flex: 1 },
   safe: { flex: 1, justifyContent: 'center', padding: 24 },
-  title: { fontSize: 28, fontWeight: '700', color: Colors.text, marginBottom: 8 },
-  subtitle: { fontSize: 16, color: Colors.textSecondary, marginBottom: 24 },
+  title: { fontSize: 28, fontWeight: '700', marginBottom: 8 },
+  subtitle: { fontSize: 16, marginBottom: 24 },
   input: {
     borderWidth: 1,
-    borderColor: Colors.border,
     borderRadius: 12,
     padding: 16,
-    backgroundColor: '#FAFAFA',
   },
   button: {
-    backgroundColor: Colors.button,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 24,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#fff', fontSize: 18, fontWeight: '600' },
+  buttonText: { fontSize: 18, fontWeight: '600' },
 });
 
 export default LoginScreen;
