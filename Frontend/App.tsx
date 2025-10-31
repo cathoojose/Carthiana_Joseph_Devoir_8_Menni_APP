@@ -4,27 +4,34 @@ import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { View, Text, ActivityIndicator } from 'react-native';
 import AuthNavigator from './navigation/AuthNavigator'; // ✅ Chemin corrigé
-import { initDatabase } from './services/database';
+// import { initDatabase } from './services/database';
 import './utils/i18n';
 
 export default function App() {
   const [dbInitialized, setDbInitialized] = useState(false);
 
-  useEffect(() => {
-    const initializeDb = async () => {
-      try {
-        console.log('🔄 Initialisation de la base de données...');
-        await initDatabase();
-        setDbInitialized(true);
-        console.log('✅ Base de données prête');
-      } catch (error) {
-        console.error('❌ Erreur initialisation DB:', error);
-        setDbInitialized(true);
-      }
-    };
+  // useEffect(() => {
+  //   const initializeDb = async () => {
+  //     try {
+  //       console.log('🔄 Initialisation de la base de données...');
+  //       await initDatabase();
+  //       setDbInitialized(true);
+  //       console.log('✅ Base de données prête');
+  //     } catch (error) {
+  //       console.error('❌ Erreur initialisation DB:', error);
+  //       setDbInitialized(true);
+  //     }
+  //   };
 
-    initializeDb();
-  }, []);
+  //   initializeDb();
+  // }, []);
+
+  useEffect(() => {
+  // Initialisation directe - on utilise le backend uniquement
+  setDbInitialized(true);
+  console.log('✅ App prête - utilisation backend uniquement');
+}, []);
+
 
   if (!dbInitialized) {
     return (

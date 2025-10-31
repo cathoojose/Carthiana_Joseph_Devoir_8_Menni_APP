@@ -3,8 +3,8 @@
     "name": "Menni",
     "slug": "menni",
     "version": "1.0.0",
-    "orientation": "portrait",
-    "userInterfaceStyle": "light",
+    "orientation": "automatic",
+    "userInterfaceStyle": "automatic",
     "splash": {
       "backgroundColor": "#ffffff"
     },

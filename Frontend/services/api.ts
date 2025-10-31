@@ -1,8 +1,7 @@
 // services/api.ts
 import axios from 'axios';
 
-// ✅ URL corrigée - sans '/auth' à la fin
-const API_BASE_URL = 'http://192.168.137.1:5000/api'; 
+const API_BASE_URL = 'http://192.168.1.61:5000/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -12,7 +11,6 @@ const api = axios.create({
   },
 });
 
-// ✅ Intercepteur pour le débogage
 api.interceptors.request.use(
   (config) => {
     console.log(`🚀 Requête API: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);

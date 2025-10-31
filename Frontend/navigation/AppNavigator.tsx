@@ -13,7 +13,7 @@ const AppNavigator = () => {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#f7666e',
+        tabBarActiveTintColor: '#eabe22',
         tabBarStyle: { borderTopLeftRadius: 20, borderTopRightRadius: 20, height: 60 },
       }}
     >

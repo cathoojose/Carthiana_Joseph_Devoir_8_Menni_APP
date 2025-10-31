@@ -4,8 +4,9 @@ const db = require('../db');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 
+
 /**
- * 🔹 ROUTE DEBUG : liste tous les utilisateurs
+ *  ROUTE DEBUG : liste tous les utilisateurs
  */
 router.get('/debug/users', (req, res) => {
   db.all('SELECT id, name, email, phone, user_type FROM users', [], (err, rows) => {
@@ -19,7 +20,7 @@ router.get('/debug/users', (req, res) => {
 });
 
 /**
- * 🔹 VÉRIFICATION EXISTENCE UTILISATEUR (route utilisée par le login)
+ *  VÉRIFICATION EXISTENCE UTILISATEUR (route utilisée par le login)
  */
 router.post('/check-user', (req, res) => {
   const { identifier } = req.body;
@@ -45,7 +46,7 @@ router.post('/check-user', (req, res) => {
 });
 
 /**
- * 🔹 ROUTE REQUEST-OTP (alternative - gardez celle que vous préférez)
+ *  ROUTE REQUEST-OTP (alternative - gardez celle que vous préférez)
  */
 router.post('/request-otp', (req, res) => {
   const { identifier } = req.body;
@@ -73,8 +74,8 @@ router.post('/request-otp', (req, res) => {
         });
       }
 
-      // ✅ Utilisateur trouvé
-      console.log('✅ Utilisateur trouvé pour OTP:', user);
+      //  Utilisateur trouvé
+      console.log(' Utilisateur trouvé pour OTP:', user);
       res.json({
         success: true,
         message: 'Utilisateur trouvé',
@@ -90,7 +91,7 @@ router.post('/request-otp', (req, res) => {
 });
 
 /**
- * 🔹 INSCRIPTION UTILISATEUR
+ * INSCRIPTION UTILISATEUR
  */
 router.post('/register', async (req, res) => {
   try {
@@ -149,7 +150,6 @@ router.post('/register', async (req, res) => {
 });
 
 /**
- * 🔹 CONNEXION UTILISATEUR
  */
 router.post('/login', (req, res) => {
   const { identifier, password } = req.body;

@@ -1,6 +1,20 @@
 // init-db.js
 const db = require('./db');
 
+// Ajoutez cette création de table dans init-db.js ou db.js
+db.run(`CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  phone TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  user_type TEXT DEFAULT 'client',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`, (err) => {
+  if (err) console.error('❌ Erreur table users:', err);
+  else console.log('✅ Table users prête');
+});
+
 db.serialize(() => {
   // Table users
   db.run(`CREATE TABLE IF NOT EXISTS users (

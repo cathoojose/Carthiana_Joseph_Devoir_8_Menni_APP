@@ -15,17 +15,16 @@ export interface LoginData {
 }
 
 export const authService = {
-  // Inscription
   async register(userData: RegisterData) {
     try {
-      // Adaptation pour votre structure backend
-      const backendData = {
-        name: userData.name,
-        email: userData.email,
-        phone: userData.phone,
-        password_hash: userData.password, // À hasher côté backend
-        user_type: userData.user_type || 'client'
-      };
+      // Adaptation pour le backend
+        const backendData = {
+      name: userData.name,
+      email: userData.email,
+      phone: userData.phone,
+      password: userData.password, // ✅ "password" au lieu de "password_hash"
+      user_type: userData.user_type || 'client'
+    };
 
       const response = await api.post('/auth/register', backendData);
       return response.data;
